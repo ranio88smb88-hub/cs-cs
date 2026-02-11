@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   ModuleType, DailyTask, DailyReport, WorkLogin, 
   AccountFollowUp, FundLog, GalleryItem 
@@ -14,6 +14,7 @@ const App: React.FC = () => {
   });
   
   const [activeModule, setActiveModule] = useState<ModuleType>('dashboard');
+  const [searchQuery, setSearchQuery] = useState('');
   const [tasks, setTasks] = useState<DailyTask[]>([]);
   const [reports, setReports] = useState<DailyReport[]>([]);
   const [logins, setLogins] = useState<WorkLogin[]>([]);
@@ -65,6 +66,12 @@ const App: React.FC = () => {
     window.location.reload();
   };
 
+  // Filtered data based on search
+  const filteredTasks = useMemo(() => tasks.filter(t => t.title.toLowerCase().includes(searchQuery.toLowerCase())), [tasks, searchQuery]);
+  const filteredReports = useMemo(() => reports.filter(r => r.content.toLowerCase().includes(searchQuery.toLowerCase())), [reports, searchQuery]);
+  const filteredLogins = useMemo(() => logins.filter(l => l.platform.toLowerCase().includes(searchQuery.toLowerCase()) || l.username.toLowerCase().includes(searchQuery.toLowerCase())), [logins, searchQuery]);
+  const filteredRekening = useMemo(() => rekening.filter(r => r.accountName.toLowerCase().includes(searchQuery.toLowerCase()) || r.accountNumber.includes(searchQuery)), [rekening, searchQuery]);
+
   if (!isAuthenticated) {
     return <LoginView onLogin={() => {
       localStorage.setItem('cspro_auth', 'true');
@@ -74,7 +81,7 @@ const App: React.FC = () => {
 
   const NavItem = ({ id, icon, label }: { id: ModuleType, icon: string, label: string }) => (
     <button 
-      onClick={() => setActiveModule(id)}
+      onClick={() => { setActiveModule(id); setSearchQuery(''); }}
       className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
         activeModule === id 
           ? 'bg-amber-500/10 text-amber-400 border border-amber-500/40 shadow-[0_0_20px_rgba(212,175,55,0.2)]' 
@@ -99,7 +106,7 @@ const App: React.FC = () => {
           )}
         </div>
         
-        <nav className="flex-1 space-y-3">
+        <nav className="flex-1 space-y-3 overflow-y-auto no-scrollbar">
           <NavItem id="dashboard" icon="🏛️" label="Overview" />
           <NavItem id="tugas" icon="📝" label="Daily Tasks" />
           <NavItem id="report" icon="📊" label="Daily Reports" />
@@ -107,6 +114,7 @@ const App: React.FC = () => {
           <NavItem id="rekening" icon="💳" label="Account F/U" />
           <NavItem id="dana" icon="💰" label="Fund Flow" />
           <NavItem id="gallery" icon="🖼️" label="Evidence" />
+          <NavItem id="validation" icon="🛡️" label="Validation" />
         </nav>
 
         <div className="mt-auto space-y-2">
@@ -126,7 +134,7 @@ const App: React.FC = () => {
       </aside>
 
       <main className="relative flex-1 p-8 overflow-y-auto z-10">
-        <header className="flex justify-between items-center mb-10 glass-panel p-8 rounded-[2.5rem] border-amber-500/10 float-animation">
+        <header className="flex flex-col lg:flex-row justify-between lg:items-center mb-10 glass-panel p-8 rounded-[2.5rem] border-amber-500/10 gap-6">
           <div>
             <h2 className="text-4xl font-black text-white uppercase tracking-tighter mb-1">
               {activeModule.replace('-', ' ')}
@@ -136,6 +144,22 @@ const App: React.FC = () => {
               <p className="text-amber-500/60 font-black text-[9px] tracking-[0.4em] uppercase">CS-OPERATIONAL HUB • V2.5.0</p>
             </div>
           </div>
+          
+          <div className="flex-1 max-w-xl mx-0 lg:mx-8">
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
+                <span className="text-amber-500/50">🔍</span>
+              </div>
+              <input 
+                type="text" 
+                placeholder={`SEARCH IN ${activeModule.toUpperCase()}...`} 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-black/40 border border-amber-500/10 rounded-2xl py-4 pl-14 pr-6 text-white text-xs font-black tracking-widest uppercase focus:border-amber-500/50 outline-none transition-all"
+              />
+            </div>
+          </div>
+
           <div className="flex items-center gap-6">
             <div className="text-right hidden sm:block">
               <p className="text-sm font-black text-white tracking-tight uppercase">Officer Alpha-01</p>
@@ -152,12 +176,13 @@ const App: React.FC = () => {
 
         <div className="animate-in fade-in slide-in-from-bottom-8 duration-1000 pb-20">
           {activeModule === 'dashboard' && <DashboardView tasks={tasks} rekening={rekening} reports={reports} />}
-          {activeModule === 'tugas' && <TugasView tasks={tasks} setTasks={setTasks} />}
-          {activeModule === 'report' && <ReportView reports={reports} setReports={setReports} />}
-          {activeModule === 'login' && <CredentialView logins={logins} setLogins={setLogins} />}
-          {activeModule === 'rekening' && <RekeningView data={rekening} setData={setRekening} />}
+          {activeModule === 'tugas' && <TugasView tasks={filteredTasks} setTasks={setTasks} />}
+          {activeModule === 'report' && <ReportView reports={filteredReports} setReports={setReports} />}
+          {activeModule === 'login' && <CredentialView logins={filteredLogins} setLogins={setLogins} />}
+          {activeModule === 'rekening' && <RekeningView data={filteredRekening} setData={setRekening} />}
           {activeModule === 'dana' && <DanaView data={funds} setData={setFunds} />}
           {activeModule === 'gallery' && <GalleryView data={gallery} setData={setGallery} />}
+          {activeModule === 'validation' && <ValidationView />}
         </div>
       </main>
     </div>
@@ -172,7 +197,6 @@ const LoginView = ({ onLogin }: { onLogin: () => void }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // KREDENSIAL LOGIN DEFAULT
     if (email === 'admin@cspro.com' && password === 'admin123') {
       onLogin();
     } else {
@@ -207,6 +231,115 @@ const LoginView = ({ onLogin }: { onLogin: () => void }) => {
           <button type="submit">LOGIN SYSTEM</button>
         </form>
         <div className="made-by">SECURE AUTHENTICATION SYSTEM V2.5</div>
+      </div>
+    </div>
+  );
+};
+
+// --- NEW VALIDATION VIEW ---
+const ValidationView = () => {
+  const [fullName, setFullName] = useState('');
+  const [maskedName, setMaskedName] = useState('');
+
+  const validationResult = useMemo(() => {
+    if (!fullName || !maskedName) return null;
+    
+    if (fullName.length !== maskedName.length) {
+      return { valid: false, reason: 'Jumlah huruf nama tidak sama' };
+    }
+
+    for (let i = 0; i < maskedName.length; i++) {
+      const mChar = maskedName[i].toLowerCase();
+      const fChar = fullName[i].toLowerCase();
+      
+      // Jika karakter di masked bukan 'x', maka harus sama dengan karakter di full name
+      if (mChar !== 'x' && mChar !== fChar) {
+        return { valid: false, reason: 'Posisi nama yang terlihat tidak sama' };
+      }
+    }
+
+    return { valid: true, reason: 'Valid (Karakter & Panjang Sesuai)' };
+  }, [fullName, maskedName]);
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-10">
+      <div className="glass-panel p-10 rounded-[3rem] shadow-2xl">
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-black text-2xl shadow-lg shadow-amber-500/20">🛡️</div>
+          <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Identity Validation Tool</h3>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+          <div className="space-y-4">
+            <label className="text-[10px] font-black text-amber-500 uppercase tracking-widest ml-2">Full Input Name</label>
+            <input 
+              type="text" 
+              placeholder="e.g. Harianto" 
+              className="w-full p-6 rounded-2xl bg-black/40 border border-white/5 text-white font-bold text-xl uppercase tracking-tighter focus:border-amber-500/50 outline-none"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+            />
+          </div>
+          <div className="space-y-4">
+            <label className="text-[10px] font-black text-amber-500 uppercase tracking-widest ml-2">Validated Mask (Use 'x' for hidden)</label>
+            <input 
+              type="text" 
+              placeholder="e.g. Haxxxxxx" 
+              className="w-full p-6 rounded-2xl bg-black/40 border border-white/5 text-white font-bold text-xl uppercase tracking-tighter focus:border-amber-500/50 outline-none"
+              value={maskedName}
+              onChange={(e) => setMaskedName(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {validationResult && (
+          <div className={`p-10 rounded-[2.5rem] border animate-in zoom-in-95 duration-500 ${validationResult.valid ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'}`}>
+            <div className="flex flex-col items-center text-center gap-4">
+              <div className={`text-6xl font-black uppercase tracking-tighter ${validationResult.valid ? 'text-emerald-500' : 'text-rose-500'}`}>
+                {validationResult.valid ? 'AUTHORIZED' : 'REJECTED'}
+              </div>
+              <p className={`text-sm font-black uppercase tracking-[0.2em] ${validationResult.valid ? 'text-emerald-500/60' : 'text-rose-500/60'}`}>
+                {validationResult.reason}
+              </p>
+              
+              <div className="mt-6 flex items-center gap-6 font-mono text-2xl font-bold bg-black/20 p-6 rounded-2xl border border-white/5">
+                <div className="flex flex-col items-center">
+                   <span className="text-[10px] uppercase text-white/20 mb-2">Input</span>
+                   <span className="text-white">{fullName.toUpperCase() || '---'}</span>
+                </div>
+                <span className="text-white/20">VS</span>
+                <div className="flex flex-col items-center">
+                   <span className="text-[10px] uppercase text-white/20 mb-2">Mask</span>
+                   <span className="text-amber-500">{maskedName.toUpperCase() || '---'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!validationResult && (
+          <div className="p-20 text-center border-2 border-dashed border-white/5 rounded-[3rem]">
+            <p className="text-white/20 font-black uppercase tracking-[0.4em] italic text-sm">Waiting for input signals...</p>
+          </div>
+        )}
+      </div>
+
+      <div className="glass-panel p-8 rounded-[2rem] border-amber-500/10">
+        <h4 className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-4">Protocol Requirements</h4>
+        <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[11px] text-white/40 font-bold uppercase tracking-tight">
+          <li className="flex items-center gap-3 bg-white/5 p-4 rounded-xl border border-white/5">
+            <span className="text-amber-500">01</span> Karakter sensor disimbolkan dengan huruf 'x'
+          </li>
+          <li className="flex items-center gap-3 bg-white/5 p-4 rounded-xl border border-white/5">
+            <span className="text-amber-500">02</span> Jumlah total karakter harus identik (Length Match)
+          </li>
+          <li className="flex items-center gap-3 bg-white/5 p-4 rounded-xl border border-white/5">
+            <span className="text-amber-500">03</span> Karakter non-'x' harus presisi di posisi yang sama
+          </li>
+          <li className="flex items-center gap-3 bg-white/5 p-4 rounded-xl border border-white/5">
+            <span className="text-amber-500">04</span> Case-insensitive (Huruf besar/kecil tidak berpengaruh)
+          </li>
+        </ul>
       </div>
     </div>
   );
