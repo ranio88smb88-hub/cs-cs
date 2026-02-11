@@ -162,7 +162,7 @@ const App: React.FC = () => {
 
           <div className="flex items-center gap-6">
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-black text-white tracking-tight uppercase">Officer Alpha-01</p>
+              <p className="text-sm font-black text-white tracking-tight uppercase">CUEK MANJA-01</p>
               <p className="text-[9px] text-emerald-500 font-bold uppercase tracking-widest">Encrypted Session</p>
             </div>
             <div className="relative group">
@@ -197,7 +197,7 @@ const LoginView = ({ onLogin }: { onLogin: () => void }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (email === 'admin@cspro.com' && password === 'admin123') {
+    if (email === 'AKUNSAYA' && password === 'AKUNSAYA') {
       onLogin();
     } else {
       setError('Invalid Identity Credentials');
@@ -209,9 +209,9 @@ const LoginView = ({ onLogin }: { onLogin: () => void }) => {
     <div className="login-page-container">
       <div className="neumorph-container">
         <div className="brand-logo"></div>
-        <div className="brand-title">CS PRO HUB</div>
+        <div className="brand-title">CS UBI</div>
         <form onSubmit={handleSubmit} className="login-inputs">
-          <label>EMAIL ADDRESS</label>
+          <label>MASUKAN ID LU</label>
           <input 
             type="email" 
             placeholder="admin@cspro.com" 
@@ -219,7 +219,7 @@ const LoginView = ({ onLogin }: { onLogin: () => void }) => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
-          <label>PASSWORD</label>
+          <label>APA PASSWORD LU</label>
           <input 
             type="password" 
             placeholder="••••••••" 
@@ -228,9 +228,9 @@ const LoginView = ({ onLogin }: { onLogin: () => void }) => {
             onChange={(e) => setPassword(e.target.value)}
           />
           {error && <p className="text-[10px] text-rose-500 font-bold text-center mt-2 animate-pulse uppercase tracking-widest">{error}</p>}
-          <button type="submit">LOGIN SYSTEM</button>
+          <button type="submit">KLIK MASOK</button>
         </form>
-        <div className="made-by">SECURE AUTHENTICATION SYSTEM V2.5</div>
+        <div className="made-by">SYSTEM KEAMANAN JIWA RAGA</div>
       </div>
     </div>
   );
