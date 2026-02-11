@@ -214,7 +214,7 @@ const LoginView = ({ onLogin }: { onLogin: () => void }) => {
           <label>MASUKAN ID LU</label>
           <input 
             type="email" 
-            placeholder="admin@cspro.com" 
+            placeholder="akunsaya@gmail.com" 
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
