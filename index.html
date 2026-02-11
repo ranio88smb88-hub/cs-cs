@@ -8,15 +8,24 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Poppins:wght@400;900&display=swap" rel="stylesheet">
     <style>
+        :root {
+            /* GANTI URL LOGO ANDA DI SINI */
+            --brand-logo-url: url("https://img.icons8.com/fluency/100/security-configuration.png");
+            --brand-color: #b48a24;
+            --neu-bg: #ecf0f3;
+            --neu-shadow-dark: #cbced1;
+            --neu-shadow-light: #ffffff;
+        }
+
+        /* Base Dashboard Styles */
         body {
             font-family: 'Montserrat', sans-serif;
             background-color: #050505;
             color: #fff;
             margin: 0;
             overflow-x: hidden;
-            touch-action: none;
         }
         #canvas {
             position: fixed;
@@ -33,58 +42,147 @@
             min-height: 100vh;
         }
         
-        /* Memastikan semua elemen UI dan Modal tetap bisa diklik */
-        aside, main, header, .glass-panel, button, input, select, textarea, a, table, .interactive, [role="dialog"], .fixed {
+        aside, main, header, .glass-panel, button, input, select, textarea, a, table, .interactive, [role="dialog"], .fixed, .login-page-container * {
             pointer-events: auto;
         }
-        
+
         .glass-panel {
             background: rgba(12, 12, 12, 0.7);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(212, 175, 55, 0.15);
-            box-shadow: 
-                0 4px 30px rgba(0, 0, 0, 0.5),
-                inset 0 0 20px rgba(212, 175, 55, 0.05);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(212, 175, 55, 0.05);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.5); }
-        ::-webkit-scrollbar-thumb { 
-            background: linear-gradient(to bottom, #D4AF37, #8B6508);
-            border-radius: 10px; 
+
+        /* NEUMORPHISM LOGIN STYLES */
+        .login-page-container {
+            margin: 0;
+            width: 100vw;
+            height: 100vh;
+            background: var(--neu-bg);
+            display: flex;
+            align-items: center;
+            text-align: center;
+            justify-content: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 9999;
+            font-family: 'Poppins', sans-serif;
         }
 
-        input, select, textarea {
-            background: rgba(0, 0, 0, 0.6) !important;
-            border: 1px solid rgba(212, 175, 55, 0.2) !important;
-            color: #fff !important;
-        }
-        
-        @keyframes subtle-float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-5px); }
-            100% { transform: translateY(0px); }
-        }
-        .float-animation {
-            animation: subtle-float 4s ease-in-out infinite;
+        .neumorph-container {
+            position: relative;
+            width: 350px;
+            height: 520px;
+            border-radius: 30px;
+            padding: 40px;
+            box-sizing: border-box;
+            background: var(--neu-bg);
+            box-shadow: 14px 14px 20px var(--neu-shadow-dark), -14px -14px 20px var(--neu-shadow-light);
+            transition: all 0.5s ease;
         }
 
-        .framer-link {
-          position: fixed;
-          bottom: 30px;
-          left: 50%;
-          transform: translateX(-50%);
-          color: rgba(255, 255, 255, 0.5);
-          text-decoration: none;
-          text-shadow: 1px 1px 2px black;
-          font-size: 10px;
-          font-weight: 800;
-          letter-spacing: 0.2em;
-          text-transform: uppercase;
-          z-index: 100;
-          pointer-events: auto;
+        .brand-logo {
+            height: 100px;
+            width: 100px;
+            background: var(--brand-logo-url);
+            background-size: 70%;
+            background-repeat: no-repeat;
+            background-position: center;
+            margin: auto;
+            border-radius: 50%;
+            box-sizing: border-box;
+            box-shadow: 7px 7px 10px var(--neu-shadow-dark), -7px -7px 10px var(--neu-shadow-light);
+        }
+
+        .brand-title {
+            margin-top: 20px;
+            font-weight: 900;
+            font-size: 1.6rem;
+            color: var(--brand-color);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .login-inputs {
+            text-align: left;
+            margin-top: 30px;
+        }
+
+        .login-inputs label {
+            display: block;
+            width: 100%;
+            padding: 0;
+            border: none;
+            outline: none;
+            box-sizing: border-box;
+            margin-bottom: 6px;
+            color: #555;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            padding-left: 10px;
+        }
+
+        .login-inputs input {
+            display: block;
+            width: 100%;
+            border: none;
+            outline: none;
+            box-sizing: border-box;
+            background: var(--neu-bg);
+            padding: 10px;
+            padding-left: 20px;
+            height: 55px;
+            font-size: 14px;
+            border-radius: 50px;
+            box-shadow: inset 6px 6px 6px var(--neu-shadow-dark), inset -6px -6px 6px var(--neu-shadow-light);
+            color: #333;
+            caret-color: var(--brand-color);
+            margin-bottom: 15px;
+        }
+
+        .login-inputs button {
+            display: block;
+            width: 100%;
+            border: none;
+            outline: none;
+            box-sizing: border-box;
+            color: white;
+            margin-top: 25px;
+            background: var(--brand-color);
+            height: 50px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 900;
+            box-shadow: 6px 6px 6px var(--neu-shadow-dark), -6px -6px 6px var(--neu-shadow-light);
+            transition: 0.3s;
+            letter-spacing: 1.5px;
+            font-size: 14px;
+        }
+
+        .login-inputs button:hover {
+            box-shadow: 2px 2px 4px var(--neu-shadow-dark), -2px -2px 4px var(--neu-shadow-light);
+            transform: translateY(2px);
+            filter: brightness(1.1);
+        }
+
+        .login-inputs button:active {
+            box-shadow: inset 2px 2px 4px var(--neu-shadow-dark), inset -2px -2px 4px var(--neu-shadow-light);
+        }
+
+        .made-by {
+            position: absolute;
+            font-size: 8px;
+            bottom: 15px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: #888;
+            font-weight: 700;
+            letter-spacing: 1px;
         }
     </style>
 <script type="importmap">
@@ -102,8 +200,6 @@
 <body>
     <canvas id="canvas"></canvas>
     <div id="root" class="app-container"></div>
-    <a target="_blank" href="https://www.framer.com/@kevin-levron/" class="framer-link">Framer Component • Kevin Levron</a>
-    
     <script type="module" src="/index.tsx"></script>
 </body>
 </html>
