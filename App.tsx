@@ -9,6 +9,10 @@ import { sheetService } from './services/sheetService';
 import LiquidBackground from 'https://cdn.jsdelivr.net/npm/threejs-components@0.0.27/build/backgrounds/liquid1.min.js';
 
 const App: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return localStorage.getItem('cspro_auth') === 'true';
+  });
+  
   const [activeModule, setActiveModule] = useState<ModuleType>('dashboard');
   const [tasks, setTasks] = useState<DailyTask[]>([]);
   const [reports, setReports] = useState<DailyReport[]>([]);
@@ -21,6 +25,8 @@ const App: React.FC = () => {
   const liquidAppRef = useRef<any>(null);
 
   useEffect(() => {
+    if (!isAuthenticated) return;
+
     const canvas = document.getElementById('canvas');
     if (canvas && LiquidBackground && !liquidAppRef.current) {
       try {
@@ -35,23 +41,36 @@ const App: React.FC = () => {
         console.error("Liquid background init failed:", err);
       }
     }
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
+    if (!isAuthenticated) return;
     setTasks(sheetService.getData('tugas', []));
     setReports(sheetService.getData('report_harian', []));
     setLogins(sheetService.getData('data_login', []));
     setRekening(sheetService.getData('rekening_followup', []));
     setFunds(sheetService.getData('dana_mutasi', []));
     setGallery(sheetService.getData('gallery_evidence', []));
-  }, []);
+  }, [isAuthenticated]);
 
-  useEffect(() => { sheetService.saveData('tugas', tasks); }, [tasks]);
-  useEffect(() => { sheetService.saveData('report_harian', reports); }, [reports]);
-  useEffect(() => { sheetService.saveData('data_login', logins); }, [logins]);
-  useEffect(() => { sheetService.saveData('rekening_followup', rekening); }, [rekening]);
-  useEffect(() => { sheetService.saveData('dana_mutasi', funds); }, [funds]);
-  useEffect(() => { sheetService.saveData('gallery_evidence', gallery); }, [gallery]);
+  useEffect(() => { if(isAuthenticated) sheetService.saveData('tugas', tasks); }, [tasks, isAuthenticated]);
+  useEffect(() => { if(isAuthenticated) sheetService.saveData('report_harian', reports); }, [reports, isAuthenticated]);
+  useEffect(() => { if(isAuthenticated) sheetService.saveData('data_login', logins); }, [logins, isAuthenticated]);
+  useEffect(() => { if(isAuthenticated) sheetService.saveData('rekening_followup', rekening); }, [rekening, isAuthenticated]);
+  useEffect(() => { if(isAuthenticated) sheetService.saveData('dana_mutasi', funds); }, [funds, isAuthenticated]);
+  useEffect(() => { if(isAuthenticated) sheetService.saveData('gallery_evidence', gallery); }, [gallery, isAuthenticated]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('cspro_auth');
+    window.location.reload();
+  };
+
+  if (!isAuthenticated) {
+    return <LoginView onLogin={() => {
+      localStorage.setItem('cspro_auth', 'true');
+      setIsAuthenticated(true);
+    }} />;
+  }
 
   const NavItem = ({ id, icon, label }: { id: ModuleType, icon: string, label: string }) => (
     <button 
@@ -90,12 +109,20 @@ const App: React.FC = () => {
           <NavItem id="gallery" icon="🖼️" label="Evidence" />
         </nav>
 
-        <button 
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="mt-auto p-4 text-amber-500/40 hover:text-amber-400 border border-amber-500/10 rounded-2xl bg-black/40 hover:bg-black/60 transition-all text-[10px] font-black tracking-widest uppercase"
-        >
-          {isSidebarOpen ? 'Minimize' : '→'}
-        </button>
+        <div className="mt-auto space-y-2">
+          <button 
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="w-full p-4 text-amber-500/40 hover:text-amber-400 border border-amber-500/10 rounded-2xl bg-black/40 hover:bg-black/60 transition-all text-[10px] font-black tracking-widest uppercase"
+          >
+            {isSidebarOpen ? 'Minimize' : '→'}
+          </button>
+          <button 
+            onClick={handleLogout}
+            className="w-full p-4 text-rose-500/40 hover:text-rose-500 border border-rose-500/10 rounded-2xl bg-black/40 hover:bg-black/60 transition-all text-[10px] font-black tracking-widest uppercase"
+          >
+            {isSidebarOpen ? 'Logout' : '⏻'}
+          </button>
+        </div>
       </aside>
 
       <main className="relative flex-1 p-8 overflow-y-auto z-10">
@@ -127,7 +154,7 @@ const App: React.FC = () => {
           {activeModule === 'dashboard' && <DashboardView tasks={tasks} rekening={rekening} reports={reports} />}
           {activeModule === 'tugas' && <TugasView tasks={tasks} setTasks={setTasks} />}
           {activeModule === 'report' && <ReportView reports={reports} setReports={setReports} />}
-          {activeModule === 'login' && <LoginView logins={logins} setLogins={setLogins} />}
+          {activeModule === 'login' && <CredentialView logins={logins} setLogins={setLogins} />}
           {activeModule === 'rekening' && <RekeningView data={rekening} setData={setRekening} />}
           {activeModule === 'dana' && <DanaView data={funds} setData={setFunds} />}
           {activeModule === 'gallery' && <GalleryView data={gallery} setData={setGallery} />}
@@ -137,7 +164,54 @@ const App: React.FC = () => {
   );
 };
 
-// ... (Sub-view components DashboardView, TugasView, ReportView, LoginView, RekeningView, DanaView tetap sama)
+// Validated Login Implementation
+const LoginView = ({ onLogin }: { onLogin: () => void }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // KREDENSIAL LOGIN DEFAULT
+    if (email === 'admin@cspro.com' && password === 'admin123') {
+      onLogin();
+    } else {
+      setError('Invalid Identity Credentials');
+      setTimeout(() => setError(''), 3000);
+    }
+  };
+
+  return (
+    <div className="login-page-container">
+      <div className="neumorph-container">
+        <div className="brand-logo"></div>
+        <div className="brand-title">CS PRO HUB</div>
+        <form onSubmit={handleSubmit} className="login-inputs">
+          <label>EMAIL ADDRESS</label>
+          <input 
+            type="email" 
+            placeholder="admin@cspro.com" 
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <label>PASSWORD</label>
+          <input 
+            type="password" 
+            placeholder="••••••••" 
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          {error && <p className="text-[10px] text-rose-500 font-bold text-center mt-2 animate-pulse uppercase tracking-widest">{error}</p>}
+          <button type="submit">LOGIN SYSTEM</button>
+        </form>
+        <div className="made-by">SECURE AUTHENTICATION SYSTEM V2.5</div>
+      </div>
+    </div>
+  );
+};
+
 const DashboardView = ({ tasks, rekening, reports }: any) => (
   <div className="space-y-10">
     <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
@@ -207,8 +281,10 @@ const TugasView = ({ tasks, setTasks }: any) => {
             <div className="flex items-center gap-6">
               <div className="relative flex items-center justify-center">
                 <input type="checkbox" checked={t.completed} onChange={() => toggle(t.id)} className="w-8 h-8 opacity-0 absolute z-10 cursor-pointer" />
-                <div className={`w-8 h-8 rounded-xl border-2 border-amber-500/30 flex items-center justify-center transition-all ${t.completed ? 'bg-amber-500 border-amber-500' : ''}`}>
-                  {t.completed && <span className="text-black font-black text-xl leading-none">✓</span>}
+                <div className="relative flex items-center justify-center">
+                    <div className={`w-8 h-8 rounded-xl border-2 border-amber-500/30 flex items-center justify-center transition-all ${t.completed ? 'bg-amber-500 border-amber-500' : ''}`}>
+                    {t.completed && <span className="text-black font-black text-xl leading-none">✓</span>}
+                    </div>
                 </div>
               </div>
               <span className={`text-xl font-bold tracking-tight ${t.completed ? 'line-through text-white/20' : 'text-white'}`}>{t.title}</span>
@@ -266,7 +342,7 @@ const ReportView = ({ reports, setReports }: any) => {
   );
 };
 
-const LoginView = ({ logins, setLogins }: any) => {
+const CredentialView = ({ logins, setLogins }: any) => {
   const [form, setForm] = useState({ platform: '', username: '', password: '', status: 'Active' as any });
   const add = () => {
     if(!form.platform || !form.username) return;
@@ -472,7 +548,6 @@ const DanaView = ({ data, setData }: any) => {
   );
 };
 
-// Gallery View dengan modal yang diperbaiki pointer-events-nya
 const GalleryView = ({ data, setData }: any) => {
   const [pendingImage, setPendingImage] = useState<string | null>(null);
   const [caption, setCaption] = useState('');
