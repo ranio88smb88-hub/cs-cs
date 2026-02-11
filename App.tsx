@@ -197,7 +197,7 @@ const LoginView = ({ onLogin }: { onLogin: () => void }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (email === 'AKUNSAYA' && password === 'AKUNSAYA') {
+    if (email === 'akunsaya@gmail.com' && password === 'akunsaya') {
       onLogin();
     } else {
       setError('Invalid Identity Credentials');
