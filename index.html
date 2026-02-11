@@ -30,8 +30,11 @@
             position: relative;
             z-index: 10;
             pointer-events: none;
+            min-height: 100vh;
         }
-        aside, main, header, .glass-panel, button, input, select, textarea, a, table {
+        
+        /* Memastikan semua elemen UI dan Modal tetap bisa diklik */
+        aside, main, header, .glass-panel, button, input, select, textarea, a, table, .interactive, [role="dialog"], .fixed {
             pointer-events: auto;
         }
         
@@ -101,7 +104,6 @@
     <div id="root" class="app-container"></div>
     <a target="_blank" href="https://www.framer.com/@kevin-levron/" class="framer-link">Framer Component • Kevin Levron</a>
     
-    <!-- WAJIB ADA: Script untuk menjalankan aplikasi React Anda -->
     <script type="module" src="/index.tsx"></script>
 </body>
 </html>
