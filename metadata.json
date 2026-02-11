@@ -1,0 +1,6 @@
+
+{
+  "name": "CS Pro - Integrated Dashboard",
+  "description": "A comprehensive CS management tool for daily tasks, reporting, account follow-ups, and fund management using Spreadsheet-style storage.",
+  "requestFramePermissions": ["camera"]
+}

@@ -1,0 +1,594 @@
+
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  ModuleType, DailyTask, DailyReport, WorkLogin, 
+  AccountFollowUp, FundLog, GalleryItem 
+} from './types';
+import { sheetService } from './services/sheetService';
+// @ts-ignore
+import LiquidBackground from 'https://cdn.jsdelivr.net/npm/threejs-components@0.0.27/build/backgrounds/liquid1.min.js';
+
+const App: React.FC = () => {
+  const [activeModule, setActiveModule] = useState<ModuleType>('dashboard');
+  const [tasks, setTasks] = useState<DailyTask[]>([]);
+  const [reports, setReports] = useState<DailyReport[]>([]);
+  const [logins, setLogins] = useState<WorkLogin[]>([]);
+  const [rekening, setRekening] = useState<AccountFollowUp[]>([]);
+  const [funds, setFunds] = useState<FundLog[]>([]);
+  const [gallery, setGallery] = useState<GalleryItem[]>([]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  
+  const liquidAppRef = useRef<any>(null);
+
+  useEffect(() => {
+    const canvas = document.getElementById('canvas');
+    if (canvas && LiquidBackground) {
+      try {
+        const app = LiquidBackground(canvas);
+        app.loadImage('https://assets.codepen.io/33787/liquid.webp');
+        app.liquidPlane.material.metalness = 0.75;
+        app.liquidPlane.material.roughness = 0.25;
+        app.liquidPlane.uniforms.displacementScale.value = 5;
+        app.setRain(false);
+        liquidAppRef.current = app;
+      } catch (err) {
+        console.error("Liquid background init failed:", err);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    setTasks(sheetService.getData('tugas', []));
+    setReports(sheetService.getData('report_harian', []));
+    setLogins(sheetService.getData('data_login', []));
+    setRekening(sheetService.getData('rekening_followup', []));
+    setFunds(sheetService.getData('dana_mutasi', []));
+    setGallery(sheetService.getData('gallery_evidence', []));
+  }, []);
+
+  useEffect(() => { sheetService.saveData('tugas', tasks); }, [tasks]);
+  useEffect(() => { sheetService.saveData('report_harian', reports); }, [reports]);
+  useEffect(() => { sheetService.saveData('data_login', logins); }, [logins]);
+  useEffect(() => { sheetService.saveData('rekening_followup', rekening); }, [rekening]);
+  useEffect(() => { sheetService.saveData('dana_mutasi', funds); }, [funds]);
+  useEffect(() => { sheetService.saveData('gallery_evidence', gallery); }, [gallery]);
+
+  const NavItem = ({ id, icon, label }: { id: ModuleType, icon: string, label: string }) => (
+    <button 
+      onClick={() => setActiveModule(id)}
+      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
+        activeModule === id 
+          ? 'bg-amber-500/10 text-amber-400 border border-amber-500/40 shadow-[0_0_20px_rgba(212,175,55,0.2)]' 
+          : 'text-slate-500 hover:bg-white/5 hover:text-white'
+      }`}
+    >
+      <span className={`text-xl ${activeModule === id ? 'scale-110' : ''}`}>{icon}</span>
+      {isSidebarOpen && <span className="font-bold text-xs tracking-widest uppercase">{label}</span>}
+    </button>
+  );
+
+  return (
+    <div className="relative flex min-h-screen bg-transparent selection:bg-amber-500 selection:text-black">
+      <aside className={`${isSidebarOpen ? 'w-72' : 'w-24'} glass-panel border-r border-amber-900/20 transition-all duration-500 flex flex-col p-5 z-50 rounded-r-3xl my-4 ml-4`}>
+        <div className="flex items-center gap-4 mb-12 px-2">
+          <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-700 rounded-2xl flex items-center justify-center text-black font-black text-xl shadow-[0_0_25px_rgba(212,175,55,0.4)] rotate-3">CP</div>
+          {isSidebarOpen && (
+            <div className="animate-in fade-in slide-in-from-left-2">
+              <h1 className="text-white font-black text-2xl tracking-tighter uppercase leading-none">PRO<span className="text-amber-500">HUB</span></h1>
+              <p className="text-[8px] text-amber-500/50 font-black tracking-[0.3em]">SECURE ACCESS</p>
+            </div>
+          )}
+        </div>
+        
+        <nav className="flex-1 space-y-3">
+          <NavItem id="dashboard" icon="🏛️" label="Overview" />
+          <NavItem id="tugas" icon="📝" label="Daily Tasks" />
+          <NavItem id="report" icon="📊" label="Daily Reports" />
+          <NavItem id="login" icon="🔑" label="Logins" />
+          <NavItem id="rekening" icon="💳" label="Account F/U" />
+          <NavItem id="dana" icon="💰" label="Fund Flow" />
+          <NavItem id="gallery" icon="🖼️" label="Evidence" />
+        </nav>
+
+        <button 
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="mt-auto p-4 text-amber-500/40 hover:text-amber-400 border border-amber-500/10 rounded-2xl bg-black/40 hover:bg-black/60 transition-all text-[10px] font-black tracking-widest uppercase"
+        >
+          {isSidebarOpen ? 'Minimize' : '→'}
+        </button>
+      </aside>
+
+      <main className="relative flex-1 p-8 overflow-y-auto z-10">
+        <header className="flex justify-between items-center mb-10 glass-panel p-8 rounded-[2.5rem] border-amber-500/10 float-animation">
+          <div>
+            <h2 className="text-4xl font-black text-white uppercase tracking-tighter mb-1">
+              {activeModule.replace('-', ' ')}
+            </h2>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+              <p className="text-amber-500/60 font-black text-[9px] tracking-[0.4em] uppercase">CS-OPERATIONAL HUB • V2.5.0</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-6">
+            <div className="text-right hidden sm:block">
+              <p className="text-sm font-black text-white tracking-tight uppercase">Officer Alpha-01</p>
+              <p className="text-[9px] text-emerald-500 font-bold uppercase tracking-widest">Encrypted Session</p>
+            </div>
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-amber-500 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+              <div className="relative w-14 h-14 bg-black border-2 border-amber-500/50 rounded-full overflow-hidden shadow-[0_0_20px_rgba(212,175,55,0.3)]">
+                <img src={`https://api.dicebear.com/7.x/bottts/svg?seed=Hub&backgroundColor=000000`} alt="avatar" />
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div className="animate-in fade-in slide-in-from-bottom-8 duration-1000 pb-20">
+          {activeModule === 'dashboard' && <DashboardView tasks={tasks} rekening={rekening} reports={reports} />}
+          {activeModule === 'tugas' && <TugasView tasks={tasks} setTasks={setTasks} />}
+          {activeModule === 'report' && <ReportView reports={reports} setReports={setReports} />}
+          {activeModule === 'login' && <LoginView logins={logins} setLogins={setLogins} />}
+          {activeModule === 'rekening' && <RekeningView data={rekening} setData={setRekening} />}
+          {activeModule === 'dana' && <DanaView data={funds} setData={setFunds} />}
+          {activeModule === 'gallery' && <GalleryView data={gallery} setData={setGallery} />}
+        </div>
+      </main>
+    </div>
+  );
+};
+
+const DashboardView = ({ tasks, rekening, reports }: any) => (
+  <div className="space-y-10">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+      {[
+        { label: 'Completion Rate', val: tasks.length ? `${Math.round((tasks.filter((t:any) => t.completed).length / tasks.length) * 100)}%` : '0%', col: 'text-amber-400' },
+        { label: 'Active Account Issues', val: rekening.length, col: 'text-rose-500' },
+        { label: 'Archived Logs', val: reports.length, col: 'text-sky-400' },
+      ].map((card, i) => (
+        <div key={i} className="glass-panel p-10 rounded-[2.5rem] border-amber-500/10 hover:border-amber-500/40 transition-all group flex flex-col justify-between">
+          <div>
+            <p className="text-amber-500/40 text-[9px] font-black uppercase tracking-[0.4em] mb-4">{card.label}</p>
+            <p className={`text-6xl font-black ${card.col} group-hover:scale-110 transition-transform origin-left tracking-tighter`}>{card.val}</p>
+          </div>
+          <div className="mt-8 pt-4 border-t border-white/5 flex items-center justify-between">
+            <span className="text-[10px] text-white/20 font-bold uppercase">Real-time Stats</span>
+            <div className="flex gap-1">
+              {[1,2,3].map(j => <div key={j} className="w-1 h-1 bg-amber-500/20 rounded-full"></div>)}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+    
+    <div className="glass-panel p-10 rounded-[3rem] border-amber-500/20 shadow-2xl">
+      <div className="flex items-center justify-between mb-8">
+        <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Operational Timeline</h3>
+        <button className="text-[10px] text-amber-500 font-black uppercase tracking-widest hover:underline">View History</button>
+      </div>
+      <div className="space-y-6">
+        {reports.slice(0, 4).map((r:any) => (
+          <div key={r.id} className="p-6 border border-white/5 bg-white/5 rounded-[1.5rem] flex flex-col sm:flex-row justify-between sm:items-center gap-4 hover:bg-white/10 transition-colors group">
+            <div className="flex-1">
+              <p className="text-sm text-white/80 font-medium leading-relaxed italic">"{r.content.substring(0, 100)}{r.content.length > 100 ? '...' : ''}"</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-[10px] font-mono text-amber-500 bg-amber-500/10 px-3 py-1 rounded-full">{r.timestamp}</span>
+              <div className="w-2 h-2 rounded-full bg-amber-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            </div>
+          </div>
+        ))}
+        {reports.length === 0 && <p className="text-white/10 italic text-sm text-center py-10">Waiting for first daily report entry...</p>}
+      </div>
+    </div>
+  </div>
+);
+
+const TugasView = ({ tasks, setTasks }: any) => {
+  const [input, setInput] = useState('');
+  const add = () => { if(input) { setTasks([...tasks, { id: Date.now().toString(), title: input, completed: false, category: 'GENERAL' }]); setInput(''); } };
+  const toggle = (id: string) => setTasks(tasks.map((t:any) => t.id === id ? { ...t, completed: !t.completed } : t));
+  const remove = (id: string) => setTasks(tasks.filter((t:any) => t.id !== id));
+
+  return (
+    <div className="glass-panel rounded-[3rem] overflow-hidden shadow-2xl">
+      <div className="p-10 flex flex-col md:flex-row gap-6 bg-white/5 border-b border-white/5">
+        <input 
+          placeholder="SECURE OBJECTIVE INPUT..." 
+          className="flex-1 p-5 rounded-2xl text-white font-black placeholder:text-white/10 outline-none uppercase tracking-widest text-sm" 
+          value={input} onChange={e => setInput(e.target.value)} 
+          onKeyPress={e => e.key === 'Enter' && add()}
+        />
+        <button onClick={add} className="bg-amber-500 text-black px-12 py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs hover:bg-white transition-all shadow-[0_0_20px_rgba(212,175,55,0.3)]">Deploy Task</button>
+      </div>
+      <div className="p-6 space-y-4">
+        {tasks.map((t: any) => (
+          <div key={t.id} className="p-6 flex justify-between items-center rounded-2xl hover:bg-white/5 transition-all group border border-transparent hover:border-amber-500/10">
+            <div className="flex items-center gap-6">
+              <div className="relative flex items-center justify-center">
+                <input type="checkbox" checked={t.completed} onChange={() => toggle(t.id)} className="w-8 h-8 opacity-0 absolute z-10 cursor-pointer" />
+                <div className={`w-8 h-8 rounded-xl border-2 border-amber-500/30 flex items-center justify-center transition-all ${t.completed ? 'bg-amber-500 border-amber-500' : ''}`}>
+                  {t.completed && <span className="text-black font-black text-xl leading-none">✓</span>}
+                </div>
+              </div>
+              <span className={`text-xl font-bold tracking-tight ${t.completed ? 'line-through text-white/20' : 'text-white'}`}>{t.title}</span>
+            </div>
+            <button onClick={() => remove(t.id)} className="text-rose-500 font-black text-[10px] uppercase tracking-widest hover:underline opacity-0 group-hover:opacity-100 transition-opacity">Abort Entry</button>
+          </div>
+        ))}
+        {tasks.length === 0 && <p className="text-center py-20 text-white/5 font-black text-4xl uppercase italic tracking-widest">No Active Objectives</p>}
+      </div>
+    </div>
+  );
+};
+
+const ReportView = ({ reports, setReports }: any) => {
+  const [input, setInput] = useState('');
+  const add = () => {
+    if(!input) return;
+    const now = new Date();
+    const ts = `${now.toLocaleDateString()} • ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    setReports([{ id: Date.now().toString(), content: input, timestamp: ts }, ...reports]);
+    setInput('');
+  };
+  const remove = (id: string) => setReports(reports.filter((r:any) => r.id !== id));
+
+  return (
+    <div className="space-y-10">
+      <div className="glass-panel p-10 rounded-[3rem] shadow-2xl">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+          <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Daily Intelligence Feed</h3>
+        </div>
+        <textarea 
+          placeholder="Transmit report details to secure database..." 
+          className="w-full p-8 rounded-[2rem] text-white font-medium focus:border-amber-500 outline-none h-48 resize-none mb-6 text-lg"
+          value={input} onChange={e => setInput(e.target.value)}
+        />
+        <button onClick={add} className="w-full bg-amber-500 text-black py-6 rounded-2xl font-black uppercase tracking-[0.4em] text-sm shadow-xl hover:bg-white transition-all transform active:scale-95">Commit Report</button>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {reports.map((r: any) => (
+          <div key={r.id} className="glass-panel p-8 rounded-[2.5rem] border-amber-500/10 relative group hover:border-amber-500/50">
+            <div className="flex justify-between items-start mb-6 border-b border-white/5 pb-4">
+              <div>
+                <p className="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] mb-1">Timestamp</p>
+                <p className="text-xs font-mono text-white/40">{r.timestamp}</p>
+              </div>
+              <button onClick={() => remove(r.id)} className="text-rose-500 text-[9px] font-black tracking-widest uppercase hover:underline">Hapus</button>
+            </div>
+            <p className="text-white/90 text-md leading-relaxed whitespace-pre-wrap font-medium">{r.content}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const LoginView = ({ logins, setLogins }: any) => {
+  const [form, setForm] = useState({ platform: '', username: '', password: '', status: 'Active' as any });
+  const add = () => {
+    if(!form.platform || !form.username) return;
+    setLogins([{ ...form, id: Date.now().toString(), timestamp: new Date().toLocaleDateString() }, ...logins]);
+    setForm({ platform: '', username: '', password: '', status: 'Active' });
+  };
+  const remove = (id: string) => setLogins(logins.filter((l:any) => l.id !== id));
+
+  return (
+    <div className="space-y-10">
+      <div className="glass-panel p-10 rounded-[3rem] shadow-2xl">
+        <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-8 text-center">Credential Registry</h3>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <input placeholder="PLATFORM" className="p-4 rounded-xl text-white font-bold text-center" value={form.platform} onChange={e => setForm({...form, platform: e.target.value})} />
+          <input placeholder="USERNAME" className="p-4 rounded-xl text-white font-bold text-center" value={form.username} onChange={e => setForm({...form, username: e.target.value})} />
+          <input placeholder="PASSWORD" type="text" className="p-4 rounded-xl text-white font-bold text-center" value={form.password} onChange={e => setForm({...form, password: e.target.value})} />
+          <select className="p-4 rounded-xl text-white font-black text-center cursor-pointer" value={form.status} onChange={e => setForm({...form, status: e.target.value as any})}>
+            <option>Active</option>
+            <option>Inactive</option>
+            <option>Pending</option>
+          </select>
+        </div>
+        <button onClick={add} className="mt-6 w-full bg-amber-500 text-black py-5 rounded-2xl font-black uppercase tracking-[0.4em] text-xs hover:bg-white transition-all">Authorize Identity</button>
+      </div>
+
+      <div className="glass-panel rounded-[3rem] overflow-hidden shadow-2xl">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-amber-500/10 text-amber-500 text-[10px] uppercase font-black tracking-[0.2em]">
+                <th className="px-10 py-6">Platform Service</th>
+                <th className="px-10 py-6">Identity User</th>
+                <th className="px-10 py-6">Credential</th>
+                <th className="px-10 py-6">Operational Status</th>
+                <th className="px-10 py-6 text-center">Override</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {logins.map((l:any) => (
+                <tr key={l.id} className="hover:bg-white/5 transition-all">
+                  <td className="px-10 py-8 font-black text-white uppercase tracking-tight">{l.platform}</td>
+                  <td className="px-10 py-8 font-mono text-amber-500/80">{l.username}</td>
+                  <td className="px-10 py-8 text-white/30 font-mono text-xs">{l.password || '••••••••'}</td>
+                  <td className="px-10 py-8">
+                    <span className={`px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${l.status === 'Active' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/20 text-rose-400 border border-rose-500/20'}`}>
+                      {l.status}
+                    </span>
+                  </td>
+                  <td className="px-10 py-8 text-center">
+                    <button onClick={() => remove(l.id)} className="text-rose-500/50 hover:text-rose-500 text-[10px] font-black uppercase tracking-widest transition-colors">Hapus</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {logins.length === 0 && <p className="text-center py-24 text-white/5 font-black text-3xl uppercase italic tracking-[0.5em]">System Vacant</p>}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const RekeningView = ({ data, setData }: any) => {
+  const [form, setForm] = useState({ 
+    accountName: '', accountNumber: '', bankName: '', issue: 'TERBLOKIR', status: 'Follow Up ADM' as any, customIssue: '' 
+  });
+  
+  const ISSUES = ['TERBLOKIR', 'RTP 02', 'PENARIKAN ATM', 'SALAH PIN', 'LIMIT TRANSAKSI', 'LAINNYA'];
+  const STATUSES = ['Follow Up ADM', 'Cabut dari Kas 1', 'Follow Up ke Bulan Depan'];
+
+  const add = () => {
+    if(!form.accountNumber || !form.accountName) return;
+    const finalIssue = form.issue === 'LAINNYA' ? form.customIssue : form.issue;
+    setData([{ ...form, issue: finalIssue, id: Date.now().toString(), timestamp: new Date().toLocaleDateString() }, ...data]);
+    setForm({ accountName: '', accountNumber: '', bankName: '', issue: 'TERBLOKIR', status: 'Follow Up ADM', customIssue: '' });
+  };
+
+  const remove = (id: string) => setData(data.filter((i:any) => i.id !== id));
+
+  return (
+    <div className="space-y-10">
+      <div className="glass-panel p-10 rounded-[3rem] shadow-2xl">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="space-y-4">
+            <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest ml-2 mb-2">Account Identification</p>
+            <input placeholder="HOLDER NAME" className="w-full p-4 rounded-xl text-white font-bold" value={form.accountName} onChange={e => setForm({...form, accountName: e.target.value})} />
+            <input placeholder="ACCOUNT NUMBER" className="w-full p-4 rounded-xl text-white font-bold" value={form.accountNumber} onChange={e => setForm({...form, accountNumber: e.target.value})} />
+            <input placeholder="BANKING INSTITUTION" className="w-full p-4 rounded-xl text-white font-bold" value={form.bankName} onChange={e => setForm({...form, bankName: e.target.value})} />
+          </div>
+          <div className="space-y-4">
+            <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest ml-2 mb-2">Issue Diagnostic</p>
+            <select className="w-full p-4 rounded-xl text-white font-black" value={form.issue} onChange={e => setForm({...form, issue: e.target.value})}>
+              {ISSUES.map(i => <option key={i} value={i}>{i}</option>)}
+            </select>
+            {form.issue === 'LAINNYA' && (
+              <input placeholder="SPECIFY KENDALA..." className="w-full p-4 rounded-xl text-white font-bold" value={form.customIssue} onChange={e => setForm({...form, customIssue: e.target.value})} />
+            )}
+            <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest ml-2 mb-2">Protocol Status</p>
+            <select className="w-full p-4 rounded-xl text-white font-black" value={form.status} onChange={e => setForm({...form, status: e.target.value as any})}>
+              {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+          <div className="flex flex-col justify-end">
+            <button onClick={add} className="w-full h-full lg:h-48 bg-amber-500 text-black rounded-[2.5rem] font-black uppercase text-md shadow-xl hover:bg-white transition-all transform active:scale-95 flex flex-col items-center justify-center gap-2">
+              <span className="text-3xl">📥</span>
+              <span className="tracking-[0.2em]">Register Case</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="glass-panel rounded-[3rem] overflow-hidden shadow-2xl">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-amber-500/10 text-amber-500 text-[10px] uppercase font-black tracking-[0.2em]">
+                <th className="px-10 py-6">Legal Holder</th>
+                <th className="px-10 py-6">Institutional Detail</th>
+                <th className="px-10 py-6">Incident Log</th>
+                <th className="px-10 py-6">Current Protocol</th>
+                <th className="px-10 py-6 text-center">System Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {data.map((r:any) => (
+                <tr key={r.id} className="hover:bg-white/5 transition-all group">
+                  <td className="px-10 py-8">
+                    <p className="font-black text-white uppercase tracking-tight text-lg">{r.accountName}</p>
+                    <p className="text-[9px] text-white/20 uppercase font-bold tracking-widest">{r.timestamp}</p>
+                  </td>
+                  <td className="px-10 py-8">
+                    <p className="text-white font-mono text-sm tracking-widest">{r.accountNumber}</p>
+                    <p className="text-[10px] text-amber-500/60 font-black uppercase">{r.bankName}</p>
+                  </td>
+                  <td className="px-10 py-8">
+                     <span className="text-[10px] font-black bg-rose-500/10 text-rose-400 border border-rose-500/20 px-4 py-1.5 rounded-full uppercase tracking-widest">{r.issue}</span>
+                  </td>
+                  <td className="px-10 py-8">
+                     <span className="text-[11px] font-bold uppercase text-white/70 tracking-tight">{r.status}</span>
+                  </td>
+                  <td className="px-10 py-8 text-center">
+                    <button onClick={() => remove(r.id)} className="text-rose-500/40 hover:text-rose-500 text-[10px] font-black tracking-widest uppercase transition-colors">Resolve/Hapus</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {data.length === 0 && <p className="text-center py-32 text-white/5 font-black text-4xl uppercase italic tracking-[0.6em]">Zero Incidents Tracked</p>}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const DanaView = ({ data, setData }: any) => {
+  const [rawInput, setRawInput] = useState('');
+  const [resultText, setResultText] = useState('');
+
+  const processFormat = () => {
+    if (!rawInput.trim()) return;
+    
+    const lines = rawInput.split('\n').filter(line => line.trim() !== '');
+    let output = "PENGIRIMAN DANA KE KAS ADMIN\nDARI QRIS\n\n";
+
+    lines.forEach((line) => {
+      // Splitting by tabs as it's common for spreadsheet copy-paste
+      const parts = line.split('\t');
+      
+      // Expected: 0:Bank, 1:AccountName, 2:AccountNumber, 3:Empty?, 4:Amount, 5:Keyword, 6:Source, 7:Link
+      if (parts.length >= 5) {
+        const bank = parts[0]?.trim();
+        const accName = parts[1]?.trim();
+        const accNum = parts[2]?.trim();
+        const amount = parts[4]?.trim();
+        const link = parts[7]?.trim() || '';
+
+        output += `NAMA REKENING : ${accName}\n`;
+        output += `NOMOR REKENING : ${accNum}\n`;
+        output += `BANK : ${bank}\n`;
+        output += `NOMINAL : ${amount}\n`;
+        output += `LAMPIRAN : ${link}\n\n`;
+      }
+    });
+
+    setResultText(output.trim());
+    
+    // Also save as traditional logs for historical view
+    const newLogs = lines.map(line => {
+        const p = line.split('\t');
+        return {
+            id: Math.random().toString(36).substr(2, 9),
+            amount: parseFloat((p[4] || '0').replace(/,/g, '')) || 0,
+            description: `Auto-Transfer: ${p[1]} (${p[0]})`,
+            timestamp: new Date().toLocaleTimeString()
+        };
+    });
+    setData([...newLogs, ...data]);
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(resultText);
+    alert('Result copied to clipboard!');
+  };
+
+  return (
+    <div className="space-y-10">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        <div className="glass-panel p-10 rounded-[3rem] shadow-2xl border-amber-500/10">
+          <div className="flex items-center justify-between mb-8">
+             <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Bulk Input Data</h3>
+             <span className="text-[10px] text-amber-500/40 font-bold uppercase tracking-widest">Spreadsheet Tab-Separated</span>
+          </div>
+          <textarea 
+            placeholder="Paste raw spreadsheet data here..." 
+            className="w-full p-6 rounded-3xl text-white font-mono text-xs h-64 outline-none resize-none mb-6 border-amber-500/20 bg-black/40" 
+            value={rawInput} onChange={e => setRawInput(e.target.value)} 
+          />
+          <button 
+            onClick={processFormat} 
+            className="w-full bg-amber-500 text-black py-6 rounded-[2rem] font-black uppercase tracking-[0.4em] text-sm shadow-2xl hover:bg-white transition-all transform active:scale-95"
+          >
+            Format & Commit
+          </button>
+        </div>
+
+        <div className="glass-panel p-10 rounded-[3rem] shadow-2xl border-emerald-500/10 relative">
+          <div className="flex items-center justify-between mb-8">
+             <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Formatted Result</h3>
+             <button 
+                onClick={copyToClipboard}
+                className="text-[9px] font-black text-emerald-400 bg-emerald-400/10 px-4 py-2 rounded-full border border-emerald-400/20 hover:bg-emerald-400 hover:text-black transition-all uppercase tracking-widest"
+             >
+               Copy Result
+             </button>
+          </div>
+          <textarea 
+            readOnly
+            placeholder="Formatted output will appear here..." 
+            className="w-full p-6 rounded-3xl text-emerald-400/80 font-mono text-sm h-64 outline-none resize-none border-emerald-500/20 bg-black/60" 
+            value={resultText}
+          />
+        </div>
+      </div>
+
+      <div className="glass-panel rounded-[3rem] overflow-hidden h-[500px] flex flex-col shadow-2xl">
+        <div className="p-8 bg-amber-500/10 border-b border-white/5 flex justify-between items-center bg-black/40 backdrop-blur-3xl sticky top-0 z-20">
+          <div>
+            <h3 className="font-black text-[10px] uppercase text-amber-500 tracking-[0.4em]">Transaction History</h3>
+            <p className="text-[9px] text-white/20 font-bold uppercase">Automated Log Entries</p>
+          </div>
+          <div className="text-right">
+            <p className="text-white/20 text-[9px] font-black uppercase">Total Processed</p>
+            <span className="text-white font-black text-4xl tracking-tighter">${data.reduce((a:any, b:any) => a + b.amount, 0).toLocaleString()}</span>
+          </div>
+        </div>
+        <div className="p-8 space-y-4 overflow-y-auto flex-1">
+          {data.map((d:any) => (
+            <div key={d.id} className="p-6 border border-white/5 bg-white/5 rounded-3xl flex justify-between items-center group hover:bg-white/10 transition-all">
+              <div className="flex gap-6 items-center">
+                <div className="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-500 text-xl font-black">↘</div>
+                <div>
+                  <p className="font-black text-amber-400 text-2xl tracking-tighter">${d.amount.toLocaleString()}</p>
+                  <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">{d.description}</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-[9px] font-mono text-white/20 mb-2 uppercase">{d.timestamp}</p>
+                <button onClick={() => setData(data.filter((x:any)=>x.id !== d.id))} className="opacity-0 group-hover:opacity-100 text-rose-500/50 hover:text-rose-500 text-[10px] font-black tracking-widest uppercase transition-all">Hapus</button>
+              </div>
+            </div>
+          ))}
+          {data.length === 0 && (
+            <div className="h-full flex flex-col items-center justify-center opacity-10">
+              <span className="text-7xl mb-4">🏦</span>
+              <p className="font-black uppercase tracking-widest text-xl">No Recent Processing</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const GalleryView = ({ data, setData }: any) => {
+  const handleFile = (e: any) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => setData([{ id: Date.now().toString(), imageData: event.target?.result, caption: 'EVIDENCE SCREENSHOT', timestamp: new Date().toLocaleDateString() }, ...data]);
+      reader.readAsDataURL(file);
+    }
+  };
+  const remove = (id: string) => setData(data.filter((g:any) => g.id !== id));
+
+  return (
+    <div className="space-y-12">
+      <div className="glass-panel p-24 rounded-[3.5rem] border-2 border-dashed border-amber-500/20 text-center hover:border-amber-500/50 transition-all cursor-pointer bg-white/5 group">
+        <input type="file" id="up" className="hidden" onChange={handleFile} accept="image/*" />
+        <label htmlFor="up" className="cursor-pointer flex flex-col items-center">
+          <div className="text-8xl mb-6 grayscale opacity-20 group-hover:opacity-100 group-hover:grayscale-0 transition-all group-hover:scale-110 duration-500">📸</div>
+          <span className="text-3xl font-black uppercase tracking-tighter text-white group-hover:text-amber-500 transition-colors">Capture Intelligence</span>
+          <span className="text-[11px] font-black text-amber-500/30 uppercase mt-4 tracking-[0.4em]">Visual Screenshot Evidence Log</span>
+        </label>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
+        {data.map((g: any) => (
+          <div key={g.id} className="glass-panel rounded-[2rem] overflow-hidden group relative border-amber-500/5 hover:border-amber-500/50 transition-all shadow-2xl">
+            <div className="relative overflow-hidden aspect-square">
+               <img src={g.imageData} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" alt="ev" />
+               <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60"></div>
+            </div>
+            <div className="p-5 bg-black/80 flex justify-between items-center backdrop-blur-md">
+              <div>
+                <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest block leading-none mb-1">Evidence ID</span>
+                <span className="text-[9px] text-white/30 font-bold uppercase">{g.timestamp}</span>
+              </div>
+              <button onClick={() => remove(g.id)} className="text-rose-500/50 hover:text-rose-500 text-[10px] font-black tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-all">Hapus</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default App;
