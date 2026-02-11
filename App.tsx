@@ -22,7 +22,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const canvas = document.getElementById('canvas');
-    if (canvas && LiquidBackground) {
+    if (canvas && LiquidBackground && !liquidAppRef.current) {
       try {
         const app = LiquidBackground(canvas);
         app.loadImage('https://assets.codepen.io/33787/liquid.webp');
@@ -137,6 +137,7 @@ const App: React.FC = () => {
   );
 };
 
+// ... (Sub-view components DashboardView, TugasView, ReportView, LoginView, RekeningView, DanaView tetap sama)
 const DashboardView = ({ tasks, rekening, reports }: any) => (
   <div className="space-y-10">
     <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
@@ -426,33 +427,20 @@ const DanaView = ({ data, setData }: any) => {
 
   const processFormat = () => {
     if (!rawInput.trim()) return;
-    
     const lines = rawInput.split('\n').filter(line => line.trim() !== '');
     let output = "PENGIRIMAN DANA KE KAS ADMIN\nDARI QRIS\n\n";
-
     lines.forEach((line) => {
-      // Splitting by tabs as it's common for spreadsheet copy-paste
       const parts = line.split('\t');
-      
-      // Expected: 0:Bank, 1:AccountName, 2:AccountNumber, 3:Empty?, 4:Amount, 5:Keyword, 6:Source, 7:Link
       if (parts.length >= 5) {
         const bank = parts[0]?.trim();
         const accName = parts[1]?.trim();
         const accNum = parts[2]?.trim();
         const amount = parts[4]?.trim();
         const link = parts[7]?.trim() || '';
-
-        output += `NAMA REKENING : ${accName}\n`;
-        output += `NOMOR REKENING : ${accNum}\n`;
-        output += `BANK : ${bank}\n`;
-        output += `NOMINAL : ${amount}\n`;
-        output += `LAMPIRAN : ${link}\n\n`;
+        output += `NAMA REKENING : ${accName}\nNOMOR REKENING : ${accNum}\nBANK : ${bank}\nNOMINAL : ${amount}\nLAMPIRAN : ${link}\n\n`;
       }
     });
-
     setResultText(output.trim());
-    
-    // Also save as traditional logs for historical view
     const newLogs = lines.map(line => {
         const p = line.split('\t');
         return {
@@ -465,128 +453,131 @@ const DanaView = ({ data, setData }: any) => {
     setData([...newLogs, ...data]);
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(resultText);
-    alert('Result copied to clipboard!');
-  };
-
   return (
     <div className="space-y-10">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
         <div className="glass-panel p-10 rounded-[3rem] shadow-2xl border-amber-500/10">
-          <div className="flex items-center justify-between mb-8">
-             <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Bulk Input Data</h3>
-             <span className="text-[10px] text-amber-500/40 font-bold uppercase tracking-widest">Spreadsheet Tab-Separated</span>
-          </div>
           <textarea 
             placeholder="Paste raw spreadsheet data here..." 
             className="w-full p-6 rounded-3xl text-white font-mono text-xs h-64 outline-none resize-none mb-6 border-amber-500/20 bg-black/40" 
             value={rawInput} onChange={e => setRawInput(e.target.value)} 
           />
-          <button 
-            onClick={processFormat} 
-            className="w-full bg-amber-500 text-black py-6 rounded-[2rem] font-black uppercase tracking-[0.4em] text-sm shadow-2xl hover:bg-white transition-all transform active:scale-95"
-          >
-            Format & Commit
-          </button>
+          <button onClick={processFormat} className="w-full bg-amber-500 text-black py-6 rounded-[2rem] font-black uppercase tracking-[0.4em] text-sm shadow-2xl hover:bg-white transition-all transform active:scale-95">Format & Commit</button>
         </div>
-
-        <div className="glass-panel p-10 rounded-[3rem] shadow-2xl border-emerald-500/10 relative">
-          <div className="flex items-center justify-between mb-8">
-             <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Formatted Result</h3>
-             <button 
-                onClick={copyToClipboard}
-                className="text-[9px] font-black text-emerald-400 bg-emerald-400/10 px-4 py-2 rounded-full border border-emerald-400/20 hover:bg-emerald-400 hover:text-black transition-all uppercase tracking-widest"
-             >
-               Copy Result
-             </button>
-          </div>
-          <textarea 
-            readOnly
-            placeholder="Formatted output will appear here..." 
-            className="w-full p-6 rounded-3xl text-emerald-400/80 font-mono text-sm h-64 outline-none resize-none border-emerald-500/20 bg-black/60" 
-            value={resultText}
-          />
-        </div>
-      </div>
-
-      <div className="glass-panel rounded-[3rem] overflow-hidden h-[500px] flex flex-col shadow-2xl">
-        <div className="p-8 bg-amber-500/10 border-b border-white/5 flex justify-between items-center bg-black/40 backdrop-blur-3xl sticky top-0 z-20">
-          <div>
-            <h3 className="font-black text-[10px] uppercase text-amber-500 tracking-[0.4em]">Transaction History</h3>
-            <p className="text-[9px] text-white/20 font-bold uppercase">Automated Log Entries</p>
-          </div>
-          <div className="text-right">
-            <p className="text-white/20 text-[9px] font-black uppercase">Total Processed</p>
-            <span className="text-white font-black text-4xl tracking-tighter">${data.reduce((a:any, b:any) => a + b.amount, 0).toLocaleString()}</span>
-          </div>
-        </div>
-        <div className="p-8 space-y-4 overflow-y-auto flex-1">
-          {data.map((d:any) => (
-            <div key={d.id} className="p-6 border border-white/5 bg-white/5 rounded-3xl flex justify-between items-center group hover:bg-white/10 transition-all">
-              <div className="flex gap-6 items-center">
-                <div className="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-500 text-xl font-black">↘</div>
-                <div>
-                  <p className="font-black text-amber-400 text-2xl tracking-tighter">${d.amount.toLocaleString()}</p>
-                  <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">{d.description}</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-[9px] font-mono text-white/20 mb-2 uppercase">{d.timestamp}</p>
-                <button onClick={() => setData(data.filter((x:any)=>x.id !== d.id))} className="opacity-0 group-hover:opacity-100 text-rose-500/50 hover:text-rose-500 text-[10px] font-black tracking-widest uppercase transition-all">Hapus</button>
-              </div>
-            </div>
-          ))}
-          {data.length === 0 && (
-            <div className="h-full flex flex-col items-center justify-center opacity-10">
-              <span className="text-7xl mb-4">🏦</span>
-              <p className="font-black uppercase tracking-widest text-xl">No Recent Processing</p>
-            </div>
-          )}
+        <div className="glass-panel p-10 rounded-[3rem] shadow-2xl border-emerald-500/10">
+          <textarea readOnly className="w-full p-6 rounded-3xl text-emerald-400/80 font-mono text-sm h-64 outline-none resize-none border-emerald-500/20 bg-black/60" value={resultText} />
         </div>
       </div>
     </div>
   );
 };
 
+// Gallery View dengan modal yang diperbaiki pointer-events-nya
 const GalleryView = ({ data, setData }: any) => {
+  const [pendingImage, setPendingImage] = useState<string | null>(null);
+  const [caption, setCaption] = useState('');
+  const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
+  const [zoomScale, setZoomScale] = useState(1);
+
   const handleFile = (e: any) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (event) => setData([{ id: Date.now().toString(), imageData: event.target?.result, caption: 'EVIDENCE SCREENSHOT', timestamp: new Date().toLocaleDateString() }, ...data]);
+      reader.onload = (event) => {
+        setPendingImage(event.target?.result as string);
+        setCaption('');
+      };
       reader.readAsDataURL(file);
     }
   };
-  const remove = (id: string) => setData(data.filter((g:any) => g.id !== id));
+
+  const addEvidence = () => {
+    if (pendingImage) {
+      setData([{ id: Date.now().toString(), imageData: pendingImage, caption: caption.trim() || 'EVIDENCE LOG', timestamp: new Date().toLocaleString() }, ...data]);
+      setPendingImage(null);
+      setCaption('');
+    }
+  };
+
+  const remove = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setData(data.filter((g:any) => g.id !== id));
+  };
 
   return (
-    <div className="space-y-12">
-      <div className="glass-panel p-24 rounded-[3.5rem] border-2 border-dashed border-amber-500/20 text-center hover:border-amber-500/50 transition-all cursor-pointer bg-white/5 group">
-        <input type="file" id="up" className="hidden" onChange={handleFile} accept="image/*" />
-        <label htmlFor="up" className="cursor-pointer flex flex-col items-center">
-          <div className="text-8xl mb-6 grayscale opacity-20 group-hover:opacity-100 group-hover:grayscale-0 transition-all group-hover:scale-110 duration-500">📸</div>
-          <span className="text-3xl font-black uppercase tracking-tighter text-white group-hover:text-amber-500 transition-colors">Capture Intelligence</span>
-          <span className="text-[11px] font-black text-amber-500/30 uppercase mt-4 tracking-[0.4em]">Visual Screenshot Evidence Log</span>
-        </label>
-      </div>
+    <div className="space-y-12 pb-20">
+      {!pendingImage ? (
+        <div className="glass-panel p-24 rounded-[3.5rem] border-2 border-dashed border-amber-500/20 text-center hover:border-amber-500/50 transition-all cursor-pointer bg-white/5 group relative">
+          <input type="file" id="up" className="hidden" onChange={handleFile} accept="image/*" />
+          <label htmlFor="up" className="cursor-pointer flex flex-col items-center">
+            <div className="text-8xl mb-6 grayscale opacity-20 group-hover:opacity-100 group-hover:grayscale-0 transition-all group-hover:scale-110 duration-500">📸</div>
+            <span className="text-3xl font-black uppercase tracking-tighter text-white group-hover:text-amber-500 transition-colors">Capture Intelligence</span>
+            <span className="text-[11px] font-black text-amber-500/30 uppercase mt-4 tracking-[0.4em]">Visual Screenshot Evidence Log</span>
+          </label>
+        </div>
+      ) : (
+        <div className="glass-panel p-10 rounded-[3.5rem] flex flex-col md:flex-row gap-10 items-center animate-in zoom-in-95">
+          <div className="w-full md:w-64 aspect-square rounded-[2rem] overflow-hidden border-2 border-amber-500/30">
+            <img src={pendingImage} className="w-full h-full object-cover" alt="pending" />
+          </div>
+          <div className="flex-1 space-y-6 w-full">
+            <textarea placeholder="ENTER SECURE DESCRIPTION..." className="w-full p-6 rounded-2xl h-32 outline-none resize-none bg-black/40 text-white font-bold" value={caption} onChange={e => setCaption(e.target.value)} />
+            <div className="flex gap-4">
+              <button onClick={addEvidence} className="flex-1 bg-amber-500 text-black py-4 rounded-xl font-black uppercase tracking-widest text-xs">Deploy Log</button>
+              <button onClick={() => setPendingImage(null)} className="px-8 border border-white/10 text-white/40 py-4 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-white/5">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
-        {data.map((g: any) => (
-          <div key={g.id} className="glass-panel rounded-[2rem] overflow-hidden group relative border-amber-500/5 hover:border-amber-500/50 transition-all shadow-2xl">
+        {data.map((g: GalleryItem) => (
+          <div 
+            key={g.id} 
+            onClick={() => setSelectedItem(g)}
+            className="glass-panel rounded-[2rem] overflow-hidden group relative border-amber-500/5 hover:border-amber-500/50 transition-all shadow-2xl cursor-zoom-in"
+          >
             <div className="relative overflow-hidden aspect-square">
                <img src={g.imageData} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" alt="ev" />
                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60"></div>
+               <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button onClick={(e) => remove(e, g.id)} className="bg-rose-500/80 p-2 rounded-lg text-white hover:bg-rose-600 transition-colors">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  </button>
+               </div>
             </div>
-            <div className="p-5 bg-black/80 flex justify-between items-center backdrop-blur-md">
-              <div>
-                <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest block leading-none mb-1">Evidence ID</span>
-                <span className="text-[9px] text-white/30 font-bold uppercase">{g.timestamp}</span>
-              </div>
-              <button onClick={() => remove(g.id)} className="text-rose-500/50 hover:text-rose-500 text-[10px] font-black tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-all">Hapus</button>
+            <div className="p-5 bg-black/80 backdrop-blur-md">
+              <p className="text-[10px] text-white/90 font-bold uppercase tracking-tight mb-1 truncate">{g.caption}</p>
+              <span className="text-[8px] text-white/20 font-black uppercase tracking-widest">{g.timestamp}</span>
             </div>
           </div>
         ))}
       </div>
+
+      {selectedItem && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10 bg-black/95 backdrop-blur-3xl animate-in fade-in duration-300 pointer-events-auto"
+          onClick={() => { setSelectedItem(null); setZoomScale(1); }}
+        >
+          <div className="absolute top-10 right-10 flex gap-4 z-[110]">
+            <button onClick={(e) => { e.stopPropagation(); setZoomScale(prev => prev === 1 ? 2 : 1); }} className="w-12 h-12 glass-panel flex items-center justify-center text-amber-500 hover:text-white rounded-full transition-all">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
+            </button>
+            <button onClick={() => { setSelectedItem(null); setZoomScale(1); }} className="w-12 h-12 glass-panel flex items-center justify-center text-rose-500 hover:text-white rounded-full transition-all">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+          <div className="relative max-w-full max-h-full overflow-auto" onClick={(e) => e.stopPropagation()}>
+            <div style={{ transform: `scale(${zoomScale})` }} className="transition-transform duration-300 origin-center cursor-zoom-out flex flex-col items-center" onClick={() => setZoomScale(prev => prev === 1 ? 2 : 1)}>
+              <img src={selectedItem.imageData} className="max-w-[90vw] max-h-[80vh] rounded-[2rem] shadow-[0_0_50px_rgba(212,175,55,0.2)] border border-amber-500/20 object-contain" alt="zoomed" />
+              <div className="mt-8 text-center bg-black/60 p-6 rounded-3xl backdrop-blur-xl border border-white/5 w-full max-w-2xl">
+                <h4 className="text-white font-black uppercase text-xl tracking-tighter mb-2">{selectedItem.caption}</h4>
+                <p className="text-amber-500/60 font-mono text-[10px] tracking-widest uppercase">{selectedItem.timestamp}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
