@@ -97,11 +97,11 @@ const App: React.FC = () => {
     <div className="relative flex min-h-screen bg-transparent selection:bg-amber-500 selection:text-black">
       <aside className={`${isSidebarOpen ? 'w-72' : 'w-24'} glass-panel border-r border-amber-900/20 transition-all duration-500 flex flex-col p-5 z-50 rounded-r-3xl my-4 ml-4`}>
         <div className="flex items-center gap-4 mb-12 px-2">
-          <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-700 rounded-2xl flex items-center justify-center text-black font-black text-xl shadow-[0_0_25px_rgba(212,175,55,0.4)] rotate-3">CP</div>
+          <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-700 rounded-2xl flex items-center justify-center text-black font-black text-xl shadow-[0_0_25px_rgba(212,175,55,0.4)] rotate-3">RN</div>
           {isSidebarOpen && (
             <div className="animate-in fade-in slide-in-from-left-2">
-              <h1 className="text-white font-black text-2xl tracking-tighter uppercase leading-none">PRO<span className="text-amber-500">HUB</span></h1>
-              <p className="text-[8px] text-amber-500/50 font-black tracking-[0.3em]">SECURE ACCESS</p>
+              <h1 className="text-white font-black text-2xl tracking-tighter uppercase leading-none">DB<span className="text-amber-500">SHIFT</span></h1>
+              <p className="text-[8px] text-amber-500/50 font-black tracking-[0.3em]">GLETAK</p>
             </div>
           )}
         </div>
